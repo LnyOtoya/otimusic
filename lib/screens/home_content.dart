@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'settings_screen.dart'; // 导入设置页面
 
 class HomeContent extends StatelessWidget {
   const HomeContent({super.key});
@@ -15,10 +16,20 @@ class HomeContent extends StatelessWidget {
             padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 16),
             child: Row(
               children: [
-                CircleAvatar(
-                  radius: 20,
-                  backgroundImage: const NetworkImage('https://picsum.photos/200'),
-                  child: const Icon(Icons.person, size: 20),
+                // 可点击的头像，点击进入设置页面
+                GestureDetector(
+                  onTap: () {
+                    // 导航到设置页面
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    );
+                  },
+                  child: CircleAvatar(
+                    radius: 20,
+                    backgroundImage: const NetworkImage('https://picsum.photos/200'),
+                    child: const Icon(Icons.person, size: 20),
+                  ),
                 ),
                 const SizedBox(width: 16),
                 Container(
@@ -59,7 +70,7 @@ class HomeContent extends StatelessWidget {
             ),
           ),
 
-          // 随机歌曲两列展示区域
+          // 随机歌曲两列展示区域（保持不变）
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: GridView.count(
@@ -75,6 +86,7 @@ class HomeContent extends StatelessWidget {
             ),
           ),
 
+          // 以下内容保持不变...
           const SizedBox(height: 8),
 
           // 新发行区域
@@ -149,6 +161,7 @@ class HomeContent extends StatelessWidget {
     );
   }
 
+  // 以下方法保持不变...
   Widget _buildRandomSongItem(int index) {
     return Card(
       elevation: 2,
