@@ -1,8 +1,16 @@
 import 'package:flutter/material.dart';
 import 'settings_screen.dart'; // 导入设置页面
 
-class HomeContent extends StatelessWidget {
+class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
+
+  @override
+  State<HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<HomeContent> {
+  // 添加选中状态变量，0表示"全部"，1表示"音乐"，默认选中"全部"
+  int _selectedFilter = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -35,7 +43,10 @@ class HomeContent extends StatelessWidget {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    // 根据选中状态改变背景色
+                    color: _selectedFilter == 0
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surfaceVariant,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: TextButton(
@@ -44,15 +55,28 @@ class HomeContent extends StatelessWidget {
                       minimumSize: const Size(40, 24),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () {},
-                    child: const Text('全部'),
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = 0; // 选中"全部"
+                      });
+                    },
+                    child: Text(
+                      '全部',
+                      // 根据选中状态改变文字颜色
+                      style: TextStyle(
+                        color: _selectedFilter == 0 ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                   decoration: BoxDecoration(
-                    color: Theme.of(context).colorScheme.surfaceVariant,
+                    // 根据选中状态改变背景色
+                    color: _selectedFilter == 1
+                        ? Theme.of(context).colorScheme.primary
+                        : Theme.of(context).colorScheme.surfaceVariant,
                     borderRadius: BorderRadius.circular(16),
                   ),
                   child: TextButton(
@@ -61,8 +85,18 @@ class HomeContent extends StatelessWidget {
                       minimumSize: const Size(40, 24),
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
-                    onPressed: () {},
-                    child: const Text('音乐'),
+                    onPressed: () {
+                      setState(() {
+                        _selectedFilter = 1; // 选中"音乐"
+                      });
+                    },
+                    child: Text(
+                      '音乐',
+                      // 根据选中状态改变文字颜色
+                      style: TextStyle(
+                        color: _selectedFilter == 1 ? Colors.white : Theme.of(context).colorScheme.onSurface,
+                      ),
+                    ),
                   ),
                 ),
                 const Spacer(),
@@ -70,90 +104,8 @@ class HomeContent extends StatelessWidget {
             ),
           ),
 
-          // 随机歌曲两列展示区域（保持不变）
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: GridView.count(
-              crossAxisCount: 2,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              childAspectRatio: 2.5,
-              padding: const EdgeInsets.only(bottom: 8),
-              children: List.generate(
-                8,
-                (index) => _buildRandomSongItem(index),
-              ),
-            ),
-          ),
-
-          // 以下内容保持不变...
-          const SizedBox(height: 8),
-
-          // 新发行区域
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '新发行',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 5,
-                    itemBuilder: (context, index) => _buildHorizontalItem(
-                      context,
-                      index,
-                      '新发行专辑 $index',
-                      '艺术家 $index',
-                      'https://picsum.photos/seed/new$index/300',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 12),
-
-          // 最常播放区域
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  '最常播放',
-                  style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                SizedBox(
-                  height: 200,
-                  child: ListView.builder(
-                    scrollDirection: Axis.horizontal,
-                    itemCount: 5,
-                    itemBuilder: (context, index) => _buildHorizontalItem(
-                      context,
-                      index,
-                      '最常播放歌曲 $index',
-                      '艺术家 $index',
-                      'https://picsum.photos/seed/played$index/300',
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          // 根据选中的筛选条件显示不同内容
+          _selectedFilter == 0 ? _buildAllContent() : _buildMusicContent(),
 
           const SizedBox(height: 80),
         ],
@@ -161,7 +113,124 @@ class HomeContent extends StatelessWidget {
     );
   }
 
-  // 以下方法保持不变...
+  // "全部"内容区域
+  Widget _buildAllContent() {
+    return Column(
+      children: [
+        // 随机歌曲两列展示区域
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: GridView.count(
+            crossAxisCount: 2,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 2.5,
+            padding: const EdgeInsets.only(bottom: 8),
+            children: List.generate(
+              8,
+              (index) => _buildRandomSongItem(index),
+            ),
+          ),
+        ),
+
+        const SizedBox(height: 8),
+
+        // 新发行区域
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '新发行',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 5,
+                  itemBuilder: (context, index) => _buildHorizontalItem(
+                    context,
+                    index,
+                    '新发行专辑 $index',
+                    '艺术家 $index',
+                    'https://picsum.photos/seed/new$index/300',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        const SizedBox(height: 12),
+
+        // 最常播放区域
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text(
+                '最常播放',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              SizedBox(
+                height: 200,
+                child: ListView.builder(
+                  scrollDirection: Axis.horizontal,
+                  itemCount: 5,
+                  itemBuilder: (context, index) => _buildHorizontalItem(
+                    context,
+                    index,
+                    '最常播放歌曲 $index',
+                    '艺术家 $index',
+                    'https://picsum.photos/seed/played$index/300',
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
+  // "音乐"内容区域（目前与"全部"内容相同，您可以根据需要修改）
+  Widget _buildMusicContent() {
+    return Column(
+      children: [
+        // 这里可以放只显示音乐的内容
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                '音乐内容',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              SizedBox(height: 16),
+              // 这里可以添加音乐专属内容
+              Text('这里是仅显示音乐的内容区域'),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildRandomSongItem(int index) {
     return Card(
       elevation: 2,
