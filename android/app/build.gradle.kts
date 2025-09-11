@@ -1,7 +1,6 @@
 plugins {
     id("com.android.application")
     id("kotlin-android")
-    // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
 }
 
@@ -20,25 +19,38 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.otimusic"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
+        
+        // 配置支持的架构
+        ndk {
+            abiFilters.add("arm64-v8a")
+        }
     }
 
     buildTypes {
-        release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+        getByName("release") {
+            // 使用调试签名
             signingConfig = signingConfigs.getByName("debug")
+            
+            // 关闭混淆和资源压缩
+            isMinifyEnabled = false
+            isShrinkResources = false
+            
+            // 混淆规则配置
+            proguardFiles(
+                getDefaultProguardFile("proguard-android.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }
 
 flutter {
+    // 修正：移除 file() 包装，直接使用字符串路径
     source = "../.."
 }
+    
