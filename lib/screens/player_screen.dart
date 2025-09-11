@@ -106,25 +106,32 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
     );
   }
 
-  // 构建拖动手柄
+  // 构建拖动手柄，添加状态栏高度的顶部间距
   Widget _buildDragHandle(ColorScheme colorScheme) {
-    return GestureDetector(
-      onVerticalDragUpdate: (details) {
-        final currentSize = _lyricsController.size;
-        final newSize = currentSize + (details.delta.dy * -0.001);
-        
-        // 限制在0.15-1.0范围内，防止超出边界导致异常
-        if (newSize >= 0.15 && newSize <= 1.0) {
-          _lyricsController.jumpTo(newSize);
-        }
-      },
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
-        width: 40,
-        height: 6,
-        decoration: BoxDecoration(
-          color: colorScheme.onSurface.withOpacity(0.5),
-          borderRadius: BorderRadius.circular(3),
+    // 获取状态栏高度
+    final statusBarHeight = MediaQuery.of(context).padding.top;
+    
+    return Padding(
+      // 添加状态栏高度的顶部间距，避免与挖孔重叠
+      padding: EdgeInsets.only(top: statusBarHeight + 8),
+      child: GestureDetector(
+        onVerticalDragUpdate: (details) {
+          final currentSize = _lyricsController.size;
+          final newSize = currentSize + (details.delta.dy * -0.001);
+          
+          // 限制在0.15-1.0范围内，防止超出边界导致异常
+          if (newSize >= 0.15 && newSize <= 1.0) {
+            _lyricsController.jumpTo(newSize);
+          }
+        },
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 8),
+          width: 40,
+          height: 6,
+          decoration: BoxDecoration(
+            color: colorScheme.onSurface.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(3),
+          ),
         ),
       ),
     );
@@ -292,28 +299,32 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                   ),
                 ),
 
-                const SizedBox(height: 40),
+                const SizedBox(height: 20),
 
-                // 控制按钮区域
+                // 播放控制按钮
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 40),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      // 播放模式切换
+                      // 播放模式
                       IconButton(
                         icon: Icon(
-                          _playMode == 0 ? Icons.repeat : Icons.shuffle,
+                          _playMode == 0 
+                              ? Icons.repeat 
+                              : Icons.shuffle, 
                           color: colorScheme.onSurface,
                           size: 24,
                         ),
                         onPressed: () => setState(() => _playMode = _playMode == 0 ? 1 : 0),
                       ),
+                      const SizedBox(width: 20),
                       // 上一曲
                       IconButton(
                         icon: Icon(Icons.skip_previous, color: colorScheme.onSurface, size: 32),
                         onPressed: () {},
                       ),
+                      const SizedBox(width: 20),
                       // 播放/暂停
                       Container(
                         width: 64,
@@ -331,11 +342,13 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                           onPressed: () => setState(() => _isPlaying = !_isPlaying),
                         ),
                       ),
+                      const SizedBox(width: 20),
                       // 下一曲
                       IconButton(
                         icon: Icon(Icons.skip_next, color: colorScheme.onSurface, size: 32),
                         onPressed: () {},
                       ),
+                      const SizedBox(width: 20),
                       // 添加到歌单
                       IconButton(
                         icon: Icon(Icons.playlist_add, color: colorScheme.onSurface, size: 24),
@@ -412,9 +425,15 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                           child: ListView.builder(
                             controller: scrollController,
                             physics: const AlwaysScrollableScrollPhysics(),
+                            // 增加底部内边距，使歌词区域远离控制按钮
+                            padding: const EdgeInsets.only(
+                              top: 8,
+                              bottom: 120, // 增加底部间距，远离控制按钮
+                            ),
                             itemCount: 20,
                             itemBuilder: (context, index) {
                               bool isCurrent = index == 10;
+
                               return Padding(
                                 padding: const EdgeInsets.symmetric(
                                   vertical: 8,
