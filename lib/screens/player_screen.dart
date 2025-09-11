@@ -301,11 +301,11 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
 
                 const SizedBox(height: 20),
 
-                // 播放控制按钮
+                // 播放控制按钮 - 控制栏左右边距为40
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 40),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       // 播放模式
                       IconButton(
@@ -318,13 +318,11 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                         ),
                         onPressed: () => setState(() => _playMode = _playMode == 0 ? 1 : 0),
                       ),
-                      const SizedBox(width: 20),
                       // 上一曲
                       IconButton(
                         icon: Icon(Icons.skip_previous, color: colorScheme.onSurface, size: 32),
                         onPressed: () {},
                       ),
-                      const SizedBox(width: 20),
                       // 播放/暂停
                       Container(
                         width: 64,
@@ -342,13 +340,11 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                           onPressed: () => setState(() => _isPlaying = !_isPlaying),
                         ),
                       ),
-                      const SizedBox(width: 20),
                       // 下一曲
                       IconButton(
                         icon: Icon(Icons.skip_next, color: colorScheme.onSurface, size: 32),
                         onPressed: () {},
                       ),
-                      const SizedBox(width: 20),
                       // 添加到歌单
                       IconButton(
                         icon: Icon(Icons.playlist_add, color: colorScheme.onSurface, size: 24),
@@ -395,8 +391,9 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                         ),
                       ),
                     ),
+                    // 关键修改：非全屏时歌词区域左右边距与控制栏保持一致（40）
                     padding: !_isLyricsFullScreen
-                        ? const EdgeInsets.symmetric(horizontal: 16)
+                        ? const EdgeInsets.symmetric(horizontal: 40)
                         : EdgeInsets.zero,
                     child: Column(
                       children: [
