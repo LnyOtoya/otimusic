@@ -1,7 +1,6 @@
-// lib/screens/login_screen.dart
 import 'package:flutter/material.dart';
-import 'package:http/http.dart' as http;
-import 'package:xml/xml.dart';
+import '../services/storage_service.dart';
+import '../services/airsonic_service.dart';
 import 'home_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -27,15 +26,24 @@ class _LoginScreenState extends State<LoginScreen> {
       });
 
       try {
-        // 测试服务器连接
-        await testConnection(
+        // 创建服务实例
+        final airsonicService = AirsonicService(
+          ipPort: _ipPortController.text.trim(),
+          username: _usernameController.text.trim(),
+          password: _passwordController.text.trim(),
+        );
+
+        // 测试连接
+        await airsonicService.testConnection();
+
+        // 保存登录信息
+        await StorageService.saveLoginInfo(
           _ipPortController.text.trim(),
           _usernameController.text.trim(),
           _passwordController.text.trim(),
         );
 
-        // 保存登录信息（实际应用中应使用安全存储）
-        // 这里简化处理，直接导航到主页
+        // 导航到主页
         if (mounted) {
           Navigator.pushReplacement(
             context,
@@ -56,29 +64,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  Future<void> testConnection(String ipPort, String username, String password) async {
-    String baseUrl = ipPort.startsWith('http') ? ipPort : 'http://$ipPort';
-    final url = Uri.parse('$baseUrl/rest/ping.view').replace(queryParameters: {
-      'u': username,
-      'p': password,
-      'v': '1.15.0',
-      'c': 'otimusic',
-    });
-
-    final response = await http.get(url);
-    if (response.statusCode != 200) {
-      throw Exception('无法连接到服务器，状态码: ${response.statusCode}');
-    }
-
-    final document = XmlDocument.parse(response.body);
-    final root = document.rootElement;
-    
-    if (root.getAttribute('status') != 'ok') {
-      final error = root.findElements('error').firstOrNull;
-      throw Exception('登录失败: ${error?.getAttribute('message') ?? '未知错误'}');
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -91,7 +76,6 @@ class _LoginScreenState extends State<LoginScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 const SizedBox(height: 80),
-                // 应用标题
                 const Text(
                   'Otimusic',
                   style: TextStyle(
@@ -102,7 +86,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 60),
                 
-                // 错误消息
                 if (_errorMessage != null)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 16),
@@ -113,7 +96,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                   ),
                 
-                // IP和端口输入
                 TextFormField(
                   controller: _ipPortController,
                   decoration: const InputDecoration(
@@ -131,7 +113,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // 用户名输入
                 TextFormField(
                   controller: _usernameController,
                   decoration: const InputDecoration(
@@ -148,7 +129,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 16),
                 
-                // 密码输入
                 TextFormField(
                   controller: _passwordController,
                   decoration: const InputDecoration(
@@ -166,7 +146,6 @@ class _LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 32),
                 
-                // 登录按钮
                 ElevatedButton(
                   onPressed: _isLoading ? null : _submitForm,
                   style: ElevatedButton.styleFrom(
