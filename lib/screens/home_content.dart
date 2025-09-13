@@ -2,10 +2,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/scheduler.dart';
 import 'package:xml/xml.dart';
+import 'package:provider/provider.dart';
 import '../services/storage_service.dart';
 import '../services/airsonic_service.dart';
 import 'settings_screen.dart';
 import 'player_screen.dart';
+import '../services/audio_service.dart';
 
 class HomeContent extends StatefulWidget {
   const HomeContent({super.key});
@@ -80,7 +82,10 @@ class _HomeContentState extends State<HomeContent> {
         // 过滤无效专辑（避免不存在的专辑ID导致后续错误）
         _recentAlbums = _recentAlbums.where((album) {
           final albumId = album.getAttribute('id');
-          return albumId != null && albumId.isNotEmpty && albumId != '655' && albumId != '1505';
+          return albumId != null &&
+              albumId.isNotEmpty &&
+              albumId != '655' &&
+              albumId != '1505';
         }).toList();
         print('[调试] 加载最近专辑: ${_recentAlbums.length}个（已过滤无效专辑）');
       } catch (e) {
@@ -104,7 +109,7 @@ class _HomeContentState extends State<HomeContent> {
         if (_topSongs.isEmpty) {
           print('[调试] 热门歌曲为空，尝试加载最近添加的歌曲');
           if (_recentAlbums.isEmpty) await _loadRecentAlbums();
-          
+
           if (_recentAlbums.isNotEmpty) {
             _topSongs = await _airsonicService!.getRecentAddedSongs(
               count: 5,
@@ -156,14 +161,21 @@ class _HomeContentState extends State<HomeContent> {
           // 顶部过滤按钮 - 调整高度与其他页面一致
           Container(
             height: 100, // 与搜索页和音乐库页保持一致的高度
-            padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 16),
+            padding: const EdgeInsets.only(
+              top: 20,
+              left: 16,
+              right: 16,
+              bottom: 16,
+            ),
             child: Row(
               children: [
                 // 圆形头像 - 点击进入设置页面
                 GestureDetector(
                   onTap: () => Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                    MaterialPageRoute(
+                      builder: (context) => const SettingsScreen(),
+                    ),
                   ),
                   child: const CircleAvatar(
                     radius: 20,
@@ -210,7 +222,9 @@ class _HomeContentState extends State<HomeContent> {
           title,
           style: TextStyle(
             fontSize: 14,
-            color: _selectedFilter == index ? Colors.white : Theme.of(context).colorScheme.onSurface,
+            color: _selectedFilter == index
+                ? Colors.white
+                : Theme.of(context).colorScheme.onSurface,
           ),
         ),
       ),
@@ -219,120 +233,154 @@ class _HomeContentState extends State<HomeContent> {
 
   // 全部内容区域（原始三区域布局）
   Widget _buildAllContent() {
-    return Column(
-      children: [
-        // 1. 随机歌曲区域（修复报红问题）
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: GridView.count(
-            crossAxisCount: 2,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 2.5, // 还原原始宽高比（避免文字挤压）
-            padding: const EdgeInsets.only(bottom: 8),
-            children: List.generate(
-              _randomSongs.length,
-              (index) => _buildRandomSongItem(_randomSongs[index], index),
-            ),
-          ),
-        ),
-
-        const SizedBox(height: 8),
-
-        // 2. 新发行专辑区域
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '新发行',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              SizedBox(
-                height: 200,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _recentAlbums.length,
-                  itemBuilder: (context, index) => _buildAlbumItem(_recentAlbums[index], index),
+    return Consumer<AudioService>(
+      builder: (context, audioService, _) {
+        return Column(
+          children: [
+            // 1. 随机歌曲区域（修复报红问题）
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: GridView.count(
+                crossAxisCount: 2,
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                childAspectRatio: 2.5, // 还原原始宽高比（避免文字挤压）
+                padding: const EdgeInsets.only(bottom: 8),
+                children: List.generate(
+                  _randomSongs.length,
+                  (index) => _buildRandomSongItem(
+                    _randomSongs[index],
+                    index,
+                    audioService,
+                  ),
                 ),
               ),
-            ],
-          ),
-        ),
+            ),
 
-        const SizedBox(height: 12),
+            const SizedBox(height: 8),
 
-        // 3. 最常播放区域
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                '最常播放',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(height: 8),
-              _topSongs.isEmpty
-                  ? const Padding(
-                      padding: EdgeInsets.symmetric(vertical: 32),
-                      child: Center(child: Text('暂无播放数据', style: TextStyle(color: Colors.grey))),
-                    )
-                  : SizedBox(
-                      height: 200,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: _topSongs.length,
-                        itemBuilder: (context, index) => _buildTopSongItem(_topSongs[index], index),
-                      ),
+            // 2. 新发行专辑区域
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '新发行',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  SizedBox(
+                    height: 200,
+                    child: ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      itemCount: _recentAlbums.length,
+                      itemBuilder: (context, index) =>
+                          _buildAlbumItem(_recentAlbums[index], index),
                     ),
-            ],
-          ),
-        ),
-      ],
+                  ),
+                ],
+              ),
+            ),
+
+            const SizedBox(height: 12),
+
+            // 3. 最常播放区域
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    '最常播放',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  _topSongs.isEmpty
+                      ? const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 32),
+                          child: Center(
+                            child: Text(
+                              '暂无播放数据',
+                              style: TextStyle(color: Colors.grey),
+                            ),
+                          ),
+                        )
+                      : SizedBox(
+                          height: 200,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: _topSongs.length,
+                            itemBuilder: (context, index) => _buildTopSongItem(
+                              _topSongs[index],
+                              index,
+                              audioService,
+                            ),
+                          ),
+                        ),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 
   // 音乐内容区域（原始列表布局）
   Widget _buildMusicContent() {
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: const [
-              Text(
-                '音乐内容',
-                style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+    return Consumer<AudioService>(
+      builder: (context, audioService, _) {
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: const [
+                  Text(
+                    '音乐内容',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                  ),
+                  SizedBox(height: 16),
+                ],
               ),
-              SizedBox(height: 16),
-            ],
-          ),
-        ),
-        // 随机歌曲列表
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: _randomSongs.isEmpty
-              ? const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 32),
-                  child: Center(child: Text('暂无音乐数据', style: TextStyle(color: Colors.grey))),
-                )
-              : ListView.builder(
-                  shrinkWrap: true,
-                  physics: const NeverScrollableScrollPhysics(),
-                  itemCount: _randomSongs.length,
-                  itemBuilder: (context, index) => _buildMusicListItem(_randomSongs[index], index),
-                ),
-        ),
-      ],
+            ),
+            // 随机歌曲列表
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: _randomSongs.isEmpty
+                  ? const Padding(
+                      padding: EdgeInsets.symmetric(vertical: 32),
+                      child: Center(
+                        child: Text(
+                          '暂无音乐数据',
+                          style: TextStyle(color: Colors.grey),
+                        ),
+                      ),
+                    )
+                  : ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: _randomSongs.length,
+                      itemBuilder: (context, index) => _buildMusicListItem(
+                        _randomSongs[index],
+                        index,
+                        audioService,
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
     );
   }
-
-  // 随机歌曲项（修复图片显示问题）
-  Widget _buildRandomSongItem(XmlElement song, int index) {
+// 随机歌曲项（修复图片显示问题）
+  Widget _buildRandomSongItem(
+    XmlElement song,
+    int index,
+    AudioService audioService,
+  ) {
     final title = song.getAttribute('title') ?? '未知标题';
     final artist = song.getAttribute('artist') ?? '未知艺术家';
     final coverArt = song.getAttribute('coverArt') ?? '';
@@ -341,44 +389,75 @@ class _HomeContentState extends State<HomeContent> {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            // 封面图（修复图片来源问题）
-            _buildCoverImage(coverUrl, index, 'song', isList: true, size: 40),
-            const SizedBox(width: 8),
-            // 文本区域（增加防溢出处理）
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min, // 避免Column高度溢出
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+      child: InkWell(
+        // 点击整个卡片触发播放
+        onTap: () {
+          if (song.getAttribute('id') != null) {
+            audioService.playSong(song, coverUrl);
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (context) => const PlayerScreen()),
+            );
+          } else {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(const SnackBar(content: Text('歌曲信息异常，无法播放')));
+          }
+        },
+        child: Padding(
+          padding: const EdgeInsets.all(8.0),
+          child: Row(
+            children: [
+              // 歌曲封面
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: Image.network(
+                  coverUrl.isNotEmpty
+                      ? coverUrl
+                      : 'https://picsum.photos/seed/song$index/100',
+                  width: 50,
+                  height: 50,
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) => Image.network(
+                    'https://picsum.photos/seed/song$index/100',
                   ),
-                  Text(
-                    artist,
-                    style: const TextStyle(fontSize: 12, color: Colors.grey),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
+                ),
               ),
-            ),
-          ],
+              const SizedBox(width: 8),
+              // 歌曲信息（移除播放按钮后，这里会自动占据更多空间）
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      title,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    Text(
+                      artist,
+                      style: const TextStyle(fontSize: 12, color: Colors.grey),
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+              // 已移除播放按钮，释放空间给歌曲信息
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // 专辑项（修复图片非音乐库问题）
+  // 专辑项
   Widget _buildAlbumItem(XmlElement album, int index) {
-    final albumName = album.getAttribute('name') ?? album.getAttribute('album') ?? '未知专辑';
+    final albumName =
+        album.getAttribute('name') ?? album.getAttribute('album') ?? '未知专辑';
     final artist = album.getAttribute('artist') ?? '未知艺术家';
     final coverArt = album.getAttribute('coverArt') ?? '';
     final coverUrl = _airsonicService?.getCoverArtUrl(coverArt) ?? '';
@@ -388,8 +467,20 @@ class _HomeContentState extends State<HomeContent> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // 专辑封面（优先使用音乐库封面）
-          _buildCoverImage(coverUrl, index, 'album', size: 150),
+          // 专辑封面
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              coverUrl.isNotEmpty
+                  ? coverUrl
+                  : 'https://picsum.photos/seed/album$index/300',
+              width: 150,
+              height: 150,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  Image.network('https://picsum.photos/seed/album$index/300'),
+            ),
+          ),
           const SizedBox(height: 4),
           SizedBox(
             width: 150,
@@ -415,19 +506,35 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   // 最常播放歌曲项
-  Widget _buildTopSongItem(XmlElement song, int index) {
+  Widget _buildTopSongItem(
+    XmlElement song,
+    int index,
+    AudioService audioService,
+  ) {
     final title = song.getAttribute('title') ?? '未知标题';
     final artist = song.getAttribute('artist') ?? '未知艺术家';
     final coverArt = song.getAttribute('coverArt') ?? '';
     final coverUrl = _airsonicService?.getCoverArtUrl(coverArt) ?? '';
-    final playCount = song.getAttribute('playCount') ?? '0';
 
     return Padding(
       padding: const EdgeInsets.only(right: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildCoverImage(coverUrl, index, 'played', size: 150),
+          // 歌曲封面
+          ClipRRect(
+            borderRadius: BorderRadius.circular(8),
+            child: Image.network(
+              coverUrl.isNotEmpty
+                  ? coverUrl
+                  : 'https://picsum.photos/seed/top$index/300',
+              width: 150,
+              height: 150,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) =>
+                  Image.network('https://picsum.photos/seed/top$index/300'),
+            ),
+          ),
           const SizedBox(height: 4),
           SizedBox(
             width: 150,
@@ -453,118 +560,60 @@ class _HomeContentState extends State<HomeContent> {
   }
 
   // 音乐列表项
-  Widget _buildMusicListItem(XmlElement song, int index) {
+  Widget _buildMusicListItem(
+    XmlElement song,
+    int index,
+    AudioService audioService,
+  ) {
     final title = song.getAttribute('title') ?? '未知标题';
     final artist = song.getAttribute('artist') ?? '未知艺术家';
+    final album = song.getAttribute('album') ?? '未知专辑';
     final coverArt = song.getAttribute('coverArt') ?? '';
     final coverUrl = _airsonicService?.getCoverArtUrl(coverArt) ?? '';
 
     return ListTile(
-      leading: _buildCoverImage(coverUrl, index, 'list', size: 50),
-      title: Text(
-        title,
-        maxLines: 1,
-        overflow: TextOverflow.ellipsis,
+      leading: ClipRRect(
+        borderRadius: BorderRadius.circular(4),
+        child: Image.network(
+          coverUrl.isNotEmpty
+              ? coverUrl
+              : 'https://picsum.photos/seed/list$index/100',
+          width: 50,
+          height: 50,
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) =>
+              Image.network('https://picsum.photos/seed/list$index/100'),
+        ),
       ),
+      title: Text(title, overflow: TextOverflow.ellipsis),
       subtitle: Text(
-        artist,
-        maxLines: 1,
+        '$artist - $album',
         overflow: TextOverflow.ellipsis,
+        style: const TextStyle(fontSize: 12),
       ),
-      trailing: const Icon(Icons.more_vert),
+      trailing: IconButton(
+        icon: const Icon(Icons.play_arrow),
+        onPressed: () {
+          audioService.playSong(song, coverUrl);
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) => const PlayerScreen()),
+          );
+        },
+      ),
       onTap: () {
-        // 点击播放歌曲
         if (song.getAttribute('id') != null) {
+          audioService.playSong(song, coverUrl);
           Navigator.push(
             context,
             MaterialPageRoute(builder: (context) => const PlayerScreen()),
           );
         } else {
-          _showSnackBar('歌曲信息异常，无法播放');
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(const SnackBar(content: Text('歌曲信息异常，无法播放')));
         }
       },
     );
-  }
-
-  // 通用封面图片组件（核心修复：图片解码+来源问题）
-  Widget _buildCoverImage(String coverUrl, int index, String type, {bool isList = false, double size = 150}) {
-    final double imageSize = size;
-    // 修复1：优先使用音乐库封面，仅在封面URL无效时使用默认图
-    final String defaultImage = 'https://picsum.photos/seed/${type}_${index}_${imageSize.toInt()}/300';
-
-    // 封面URL有效时，优先加载音乐库封面
-    if (coverUrl.isNotEmpty && coverUrl.startsWith('http')) {
-      return Image.network(
-        coverUrl,
-        height: imageSize,
-        width: imageSize,
-        fit: BoxFit.cover,
-        // 修复2：图片解码失败处理（仅显示默认图，不触发SnackBar）
-        errorBuilder: (context, error, stackTrace) {
-          print('[错误] 音乐库封面加载失败: $coverUrl, 错误: ${error.toString().substring(0, 50)}...');
-          return _buildDefaultImage(imageSize, defaultImage);
-        },
-        // 修复3：加载中占位图（避免空白）
-        loadingBuilder: (context, child, loadingProgress) {
-          if (loadingProgress == null) return child;
-          return Container(
-            height: imageSize,
-            width: imageSize,
-            color: Colors.grey[100],
-            child: const Center(
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.grey),
-            ),
-          );
-        },
-        // 修复4：缓存优化（减少重复加载）
-        cacheWidth: (imageSize * 2).toInt(),
-        cacheHeight: (imageSize * 2).toInt(),
-      );
-    }
-
-    // 封面URL无效时，显示默认图
-    return _buildDefaultImage(imageSize, defaultImage);
-  }
-
-  // 默认图片组件（统一默认图样式）
-  Widget _buildDefaultImage(double size, String defaultUrl) {
-    return Container(
-      height: size,
-      width: size,
-      color: Colors.grey[200],
-      child: Image.network(
-        defaultUrl,
-        height: size,
-        width: size,
-        fit: BoxFit.cover,
-        errorBuilder: (context, error, stackTrace) {
-          // 极端情况：默认图也加载失败时，显示音乐图标
-          return Container(
-            height: size,
-            width: size,
-            color: Colors.grey[300],
-            child: Icon(
-              Icons.music_note,
-              color: Colors.grey[500],
-              size: size / 3,
-            ),
-          );
-        },
-      ),
-    );
-  }
-
-  // 修复3：SnackBar调用时机（避免在build期间调用）
-  void _showSnackBar(String message) {
-    SchedulerBinding.instance.addPostFrameCallback((_) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(message),
-            duration: const Duration(seconds: 2),
-          ),
-        );
-      }
-    });
   }
 }
