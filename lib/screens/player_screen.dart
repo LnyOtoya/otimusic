@@ -1,4 +1,3 @@
-// lib/screens/player_screen.dart
 import 'package:flutter/material.dart';
 
 class PlayerScreen extends StatefulWidget {
@@ -23,8 +22,6 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
   int _currentPage = 0;
   // 动画控制器
   late AnimationController _animationController;
-  // 滑动进度
-  double _dragProgress = 0.0;
 
   @override
   void initState() {
@@ -32,7 +29,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
     // 初始化页面控制器
     _pageController = PageController(initialPage: 0);
     
-    // 初始化动画控制器
+    // 初始化动画控制器（用于页面切换过渡）
     _animationController = AnimationController(
       vsync: this,
       duration: const Duration(milliseconds: 300),
@@ -83,7 +80,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
     );
   }
 
-  // 切换到歌词页面
+  // 切换到歌词页面（带动画）
   void _switchToLyrics() {
     setState(() => _currentPage = 1);
     _pageController.animateToPage(
@@ -93,7 +90,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
     );
   }
 
-  // 切换到播放页面
+  // 切换到播放页面（带动画）
   void _switchToPlayer() {
     setState(() => _currentPage = 0);
     _pageController.animateToPage(
@@ -103,7 +100,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
     );
   }
 
-  // 生成歌词文本
+  // 生成歌词文本（模拟真实歌词数据）
   String _getLyricText(int index) {
     final List<String> lyrics = [
       'Verse 1:',
@@ -128,10 +125,14 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
       'The moon reflects on crystal waves',
       'A thousand promises, a thousand graves',
       'I sail alone but not for long',
-      'Your light will guide me where I belong'
+      'Your light will guide me where I belong',
+      '',
+      'Outro:',
+      'Frozen tides, carry me home...',
+      'Frozen tides, set me free...'
     ];
     
-    return lyrics[index % lyrics.length];
+    return index < lyrics.length ? lyrics[index] : '';
   }
 
   @override
@@ -143,7 +144,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
       backgroundColor: colorScheme.surface,
       body: Stack(
         children: [
-          // 主页面容器，支持左右滑动
+          // 主页面容器（左右滑动切换播放页/歌词页）
           PageView(
             controller: _pageController,
             onPageChanged: (index) {
@@ -151,15 +152,15 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
             },
             physics: const BouncingScrollPhysics(),
             children: [
-              // 1. 播放页面
+              // 1. 播放页面（保持完整功能）
               _buildPlayerPage(colorScheme),
               
-              // 2. 歌词页面
+              // 2. 歌词页面（简化版，移除进度条和控制栏）
               _buildLyricsPage(colorScheme),
             ],
           ),
           
-          // 页面指示器和切换按钮
+          // 页面指示器（顶部居中，不与内容重叠）
           Positioned(
             top: MediaQuery.of(context).padding.top + 16,
             left: 0,
@@ -167,7 +168,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                // 播放页指示器
+                // 播放页指示器（可点击切换）
                 GestureDetector(
                   onTap: _switchToPlayer,
                   child: Container(
@@ -180,7 +181,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                     ),
                   ),
                 ),
-                // 歌词页指示器
+                // 歌词页指示器（可点击切换）
                 GestureDetector(
                   onTap: _switchToLyrics,
                   child: Container(
@@ -196,62 +197,22 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
               ],
             ),
           ),
-          
-          // 滑动提示指示器（仅在播放页显示）
-          if (_currentPage == 0)
-            Positioned(
-              top: MediaQuery.of(context).size.height / 2,
-              right: 16,
-              child: Column(
-                children: [
-                  Icon(Icons.arrow_left, color: colorScheme.onSurface.withOpacity(0.5)),
-                  const SizedBox(height: 8),
-                  Text(
-                    '左滑查看歌词',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            
-          // 滑动提示指示器（仅在歌词页显示）
-          if (_currentPage == 1)
-            Positioned(
-              top: MediaQuery.of(context).size.height / 2,
-              left: 16,
-              child: Column(
-                children: [
-                  Icon(Icons.arrow_right, color: colorScheme.onSurface.withOpacity(0.5)),
-                  const SizedBox(height: 8),
-                  Text(
-                    '右滑返回',
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.5),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
         ],
       ),
     );
   }
 
-  // 构建播放页面
+  // 构建播放页面（保持原有完整功能）
   Widget _buildPlayerPage(ColorScheme colorScheme) {
     return Column(
       children: [
-        // 顶部导航栏
+        // 顶部导航栏（下移避免与指示器重叠）
         Padding(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 40,
             left: 16,
             right: 16,
-            bottom: 20,
+            bottom: 30,
           ),
           child: Row(
             children: [
@@ -294,7 +255,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
 
         // 专辑封面
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
           child: AspectRatio(
             aspectRatio: 1.0,
             child: ClipRRect(
@@ -319,7 +280,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
           ),
         ),
 
-        const SizedBox(height: 30),
+        const SizedBox(height: 40),
 
         // 歌曲信息
         Padding(
@@ -347,9 +308,9 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
           ),
         ),
 
-        const SizedBox(height: 30),
+        const SizedBox(height: 40),
 
-        // 进度条
+        // 进度条（播放页保留）
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -389,11 +350,11 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
           ),
         ),
 
-        const SizedBox(height: 20),
+        const SizedBox(height: 30),
 
-        // 播放控制按钮
+        // 播放控制按钮（播放页保留）
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40),
+          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 10),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -457,26 +418,26 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
     );
   }
 
-  // 构建歌词页面
+  // 构建歌词页面（简化版：移除进度条和底部控制栏）
   Widget _buildLyricsPage(ColorScheme colorScheme) {
     return Column(
       children: [
-        // 顶部导航栏
+        // 顶部导航栏（与播放页对齐）
         Padding(
           padding: EdgeInsets.only(
-            top: MediaQuery.of(context).padding.top + 16,
+            top: MediaQuery.of(context).padding.top + 40,
             left: 16,
             right: 16,
-            bottom: 20,
+            bottom: 30,
           ),
           child: Row(
             children: [
-              // 返回按钮
+              // 返回按钮（返回上一页，而非切换页面）
               IconButton(
                 icon: Icon(Icons.arrow_back_ios, color: colorScheme.onSurface),
                 onPressed: () => Navigator.pop(context),
               ),
-              // 中间标题
+              // 中间标题（歌词页标题）
               const Expanded(
                 child: Text(
                   '歌词',
@@ -487,7 +448,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                   ),
                 ),
               ),
-              // 占位图标，保持布局平衡
+              // 占位图标（保持布局平衡，与播放页对齐）
               IconButton(
                 icon: Icon(Icons.more_vert, color: Colors.transparent),
                 onPressed: () {},
@@ -496,7 +457,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
           ),
         ),
 
-        // 歌曲信息
+        // 歌曲信息（简化展示，与播放页风格统一）
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Column(
@@ -522,55 +483,15 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
           ),
         ),
 
-        // 进度条
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
-          child: Column(
-            children: [
-              Slider(
-                value: _currentProgress.toDouble(),
-                min: 0,
-                max: _totalDuration.toDouble(),
-                activeColor: colorScheme.primary,
-                inactiveColor: colorScheme.onSurface.withOpacity(0.2),
-                onChanged: (value) {
-                  setState(() {
-                    _currentProgress = value.toInt();
-                  });
-                },
-              ),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Text(
-                    _formatDuration(_currentProgress),
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                  Text(
-                    _formatDuration(_totalDuration),
-                    style: TextStyle(
-                      color: colorScheme.onSurface.withOpacity(0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-
         const SizedBox(height: 20),
 
-        // 歌词内容（可滚动）
+        // 歌词内容（占满剩余空间，可滚动）
         Expanded(
           child: ListView.builder(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-            itemCount: 20,
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            itemCount: 25, // 匹配歌词数组长度
             itemBuilder: (context, index) {
-              // 模拟当前播放的歌词行
+              // 标记当前播放的歌词行（模拟）
               bool isCurrent = index == 10;
 
               return Padding(
@@ -579,7 +500,7 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
                   _getLyricText(index),
                   style: TextStyle(
                     color: isCurrent 
-                        ? colorScheme.primary 
+                        ? colorScheme.primary  // 当前行高亮
                         : colorScheme.onSurface.withOpacity(0.8),
                     fontSize: isCurrent ? 18 : 16,
                     fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
@@ -591,46 +512,8 @@ class _PlayerScreenState extends State<PlayerScreen> with SingleTickerProviderSt
           ),
         ),
 
-        // 简化的播放控制
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 20),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              IconButton(
-                icon: Icon(Icons.skip_previous, color: colorScheme.onSurface, size: 24),
-                onPressed: () {},
-              ),
-              
-              // 播放/暂停
-              Container(
-                width: 56,
-                height: 56,
-                decoration: BoxDecoration(
-                  color: colorScheme.primary,
-                  shape: BoxShape.circle,
-                ),
-                child: IconButton(
-                  icon: Icon(
-                    _isPlaying ? Icons.pause : Icons.play_arrow,
-                    color: Colors.white,
-                    size: 28,
-                  ),
-                  onPressed: () {
-                    setState(() {
-                      _isPlaying = !_isPlaying;
-                    });
-                  },
-                ),
-              ),
-              
-              IconButton(
-                icon: Icon(Icons.skip_next, color: colorScheme.onSurface, size: 24),
-                onPressed: () {},
-              ),
-            ],
-          ),
-        ),
+        // 底部留白（替代原控制栏，保持页面平衡）
+        const SizedBox(height: 32),
       ],
     );
   }
