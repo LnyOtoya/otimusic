@@ -11,8 +11,8 @@ class SearchScreen extends StatelessWidget {
         children: [
           // 顶部栏 - 增加顶部间距，远离状态栏
           Container(
-            height: 100, // 与主页保持一致的高度
-            padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 16),
+            height: 80, // 与主页保持一致的高度
+            padding: const EdgeInsets.only(top: 32, left: 16, right: 16, bottom: 12),
             child: Row(
               children: [
                 CircleAvatar(

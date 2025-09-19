@@ -160,12 +160,12 @@ class _HomeContentState extends State<HomeContent> {
         children: [
           // 顶部过滤按钮 - 调整高度与其他页面一致
           Container(
-            height: 100, // 与搜索页和音乐库页保持一致的高度
+            height: 80, // 与搜索页和音乐库页保持一致的高度
             padding: const EdgeInsets.only(
-              top: 20,
+              top: 32,
               left: 16,
               right: 16,
-              bottom: 16,
+              bottom: 12,
             ),
             child: Row(
               children: [

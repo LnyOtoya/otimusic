@@ -19,8 +19,8 @@ class _MusicLibraryScreenState extends State<MusicLibraryScreen> {
         children: [
           // 顶部栏 - 与其他页面保持一致
           Container(
-            height: 100,
-            padding: const EdgeInsets.only(top: 20, left: 16, right: 16, bottom: 16),
+            height: 80,
+            padding: const EdgeInsets.only(top: 32, left: 16, right: 16, bottom: 12),
             child: Row(
               children: [
                 CircleAvatar(
